@@ -1,5 +1,5 @@
 export function KofiFab() {
-  const kofiUrl = "https://ko-fi.com/danieldallimore";
+	const kofiUrl = "https://ko-fi.com/danieldallimore";
 
 	return (
 		<a
@@ -13,6 +13,6 @@ export function KofiFab() {
 			<span className="hidden sm:inline font-medium">Buy me a coffee</span>
 		</a>
 	);
-} 
+}
 
 export default KofiFab;
