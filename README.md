@@ -175,6 +175,14 @@ Inside you'll find:
 
 ---
 
+## ☕ Support the project
+
+If you'd like to support the project, you can buy me a coffee on Ko‑fi: https://ko-fi.com/danieldallimore
+
+Thank you for your support!
+
+---
+
 <p align="center">
   <strong>Made for dreamers who build. 🚀</strong>
 </p>
