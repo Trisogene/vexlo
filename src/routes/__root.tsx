@@ -4,20 +4,21 @@ import {
 	Outlet,
 	useNavigate,
 } from "@tanstack/react-router";
+import { LayoutDashboard, LogOut } from "lucide-react";
 import { Toaster } from "sonner";
-import { ModeToggle } from "@/components/mode-toggle/mode-toggle";
+import { KofiFab } from "@/components/kofi-fab";
 import { Logo } from "@/components/logo";
+import { ModeToggle } from "@/components/mode-toggle/mode-toggle";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
-	DropdownMenuTrigger,
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuSeparator,
+	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuthStore } from "@/lib/stores/auth";
 import { supabase } from "@/lib/supabase";
-import { LogOut, LayoutDashboard } from "lucide-react";
 
 export const Route = createRootRouteWithContext<{
 	queryClient: QueryClient;
@@ -42,6 +43,9 @@ function Header() {
 	// Get first letter of email username for cleaner initials
 	const userName = userEmail.split("@")[0];
 	const userInitial = userName ? userName.charAt(0).toUpperCase() : "?";
+
+	// Ko-fi link (hardcoded)
+	const kofiUrl = "https://ko-fi.com/danieldallimore";
 
 	return (
 		<header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur-sm">
@@ -79,9 +83,7 @@ function Header() {
 										</p>
 									</div>
 									<DropdownMenuSeparator />
-									<DropdownMenuItem
-										onClick={() => navigate({ to: "/posts" })}
-									>
+									<DropdownMenuItem onClick={() => navigate({ to: "/posts" })}>
 										<LayoutDashboard className="mr-2 h-4 w-4" />
 										Dashboard
 									</DropdownMenuItem>
@@ -115,6 +117,16 @@ function Header() {
 							</Button>
 						</>
 					)}
+					<a
+						href={kofiUrl}
+						target="_blank"
+						rel="noopener noreferrer"
+						className="hidden sm:inline-flex items-center gap-2 rounded-md px-2 py-1 text-sm hover:opacity-90 transition"
+						aria-label="Support via Ko-fi"
+					>
+						<span className="text-amber-400">☕</span>
+						<span className="sr-only sm:not-sr-only">Buy me a coffee</span>
+					</a>
 					<ModeToggle />
 				</div>
 			</div>
@@ -127,6 +139,7 @@ function RootComponent() {
 		<div className="min-h-dvh antialiased flex flex-col">
 			<Header />
 			<Outlet />
+			<KofiFab />
 			<Toaster
 				theme="system"
 				richColors
