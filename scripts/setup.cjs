@@ -36,7 +36,7 @@ async function main() {
 				execSync('npm install', { stdio: 'inherit' });
 			}
 			console.log("✅ Dependencies installed. Starting wizard...\n");
-		} catch (e) {
+		} catch {
 			console.error("❌ Failed to install dependencies. Please run 'npm install' or 'pnpm install' manually.");
 			process.exit(1);
 		}
@@ -126,6 +126,23 @@ async function main() {
 			}
 
 			if (isDockerRunning) {
+				// If Supabase is already running locally (started previously), update .env immediately
+				try {
+					execSync('npx supabase status', { stdio: 'ignore' });
+					const spinnerEnvCheck = ora('Detected local Supabase, updating .env...').start();
+					if (fs.existsSync(envPath)) {
+						let envContent = fs.readFileSync(envPath, 'utf8');
+						envContent = envContent.replace(/VITE_SUPABASE_URL=.*/, 'VITE_SUPABASE_URL=http://127.0.0.1:54321');
+						if (!/VITE_SUPABASE_ANON_KEY=/.test(envContent) || envContent.includes('YOUR_SUPABASE_ANON_KEY')) {
+							envContent = envContent.replace(/VITE_SUPABASE_ANON_KEY=.*/, 'VITE_SUPABASE_ANON_KEY=your-local-anon-key');
+						}
+						fs.writeFileSync(envPath, envContent);
+					}
+					spinnerEnvCheck.succeed('Updated .env to point to local Supabase');
+				} catch {
+					// supabase not running or detection failed; continue to prompt
+				}
+
 				const { startSupabase } = await prompts({
 					type: 'confirm',
 					name: 'startSupabase',
@@ -249,6 +266,22 @@ async function main() {
 				initial: false
 			});
 			if (!forceContinueNoDocker) process.exit(1);
+		}		// If Supabase started locally, ensure .env points to the local Supabase URL
+		if (typeof supabaseStartedSuccessfully !== 'undefined' && supabaseStartedSuccessfully) {
+			try {
+				const spinnerEnv = ora('Updating .env for local Supabase...').start();
+				if (fs.existsSync(envPath)) {
+					let envContent = fs.readFileSync(envPath, 'utf8');
+					envContent = envContent.replace(/VITE_SUPABASE_URL=.*/, 'VITE_SUPABASE_URL=http://localhost:54321');
+					if (!/VITE_SUPABASE_ANON_KEY=/.test(envContent) || envContent.includes('YOUR_SUPABASE_ANON_KEY')) {
+						envContent = envContent.replace(/VITE_SUPABASE_ANON_KEY=.*/, 'VITE_SUPABASE_ANON_KEY=your-local-anon-key');
+					}
+					fs.writeFileSync(envPath, envContent);
+				}
+				spinnerEnv.succeed('Updated .env to point to local Supabase');
+			} catch {
+				console.log(pc.yellow('Could not update .env automatically. Please set VITE_SUPABASE_URL=http://localhost:54321 manually.'));
+			}
 		}
 	} else if (dbChoice === 'remote') {
 		console.log(pc.yellow('\nℹ Please create a project on https://supabase.com first.\n'));
