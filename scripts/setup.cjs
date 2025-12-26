@@ -126,9 +126,11 @@ async function main() {
 			}
 
 			if (isDockerRunning) {
-				// If Supabase is already running locally (started previously), update .env immediately
+				// If Supabase is already running locally (started previously), update .env and skip start prompt					let supabaseStartedSuccessfully;					let isSupabaseRunning = false;
 				try {
 					execSync('npx supabase status', { stdio: 'ignore' });
+					isSupabaseRunning = true;
+					supabaseStartedSuccessfully = true;
 					const spinnerEnvCheck = ora('Detected local Supabase, updating .env...').start();
 					if (fs.existsSync(envPath)) {
 						let envContent = fs.readFileSync(envPath, 'utf8');
@@ -140,43 +142,41 @@ async function main() {
 					}
 					spinnerEnvCheck.succeed('Updated .env to point to local Supabase');
 				} catch {
-					// supabase not running or detection failed; continue to prompt
+					// supabase not running or detection failed; will prompt to start
 				}
 
-				const { startSupabase } = await prompts({
-					type: 'confirm',
-					name: 'startSupabase',
-					message: 'Start Supabase services now? (Takes a few mins)',
-					initial: true
-				});
+				if (isSupabaseRunning) {
+					console.log(pc.green('\n✔ Supabase services are already running locally. Skipping start.\n'));
+				} else {
+					const { startSupabase } = await prompts({
+						type: 'confirm',
+						name: 'startSupabase',
+						message: 'Start Supabase services now? (Takes a few mins)',
+						initial: true
+					});
+					if (startSupabase) {
+						const projectName = path.basename(process.cwd());
 
-				if (startSupabase) {
-					const projectName = path.basename(process.cwd());
+						const runStart = async () => {
+							console.log(pc.cyan('\n🚀 Starting Supabase services...\n'));
+							const startResult = spawnSync('npx', ['supabase', 'start'], { stdio: 'inherit', shell: true });
 
-					const runStart = async () => {
-						console.log(pc.cyan('\n🚀 Starting Supabase services...\n'));
-						const startResult = spawnSync('npx', ['supabase', 'start'], { stdio: 'inherit', shell: true });
+							if (startResult.status !== 0) {
+								throw new Error("Supabase start failed");
+							}
 
-						if (startResult.status !== 0) {
-							throw new Error("Supabase start failed");
-						}
+							const healthSpinner = ora('Verifying Supabase health...').start();
 
-						const healthSpinner = ora('Verifying Supabase health...').start();
+							// Health check loop
+							let isHealthy = false;
+							let attempts = 0;
+							const maxAttempts = 40;
 
-						// Health check loop
-						let isHealthy = false;
-						let attempts = 0;
-						const maxAttempts = 40;
-
-						while (!isHealthy && attempts < maxAttempts) {
-							try {
-								execSync('npx supabase status', { stdio: 'pipe' });
-								isHealthy = true;
-							} catch {
-								attempts++;
-								const errorOutput = e.stderr?.toString() || e.stdout?.toString() || "";
-
-								if (errorOutput.includes('not running') || errorOutput.includes('exited') || errorOutput.includes('Conflict') || errorOutput.includes('already in use')) {
+							while (!isHealthy && attempts < maxAttempts) {
+								try {
+									execSync('npx supabase status', { stdio: 'pipe' });
+									isHealthy = true;
+								} catch (e) {
 									healthSpinner.fail('Supabase is having trouble starting.');
 									return await triggerRecovery(errorOutput);
 								}
@@ -238,7 +238,7 @@ async function main() {
 						return false; // User chose to skip
 					};
 
-					let supabaseStartedSuccessfully = false;
+					supabaseStartedSuccessfully = false;
 					try {
 						supabaseStartedSuccessfully = await runStart();
 					} catch {

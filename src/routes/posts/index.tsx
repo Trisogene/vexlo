@@ -3,6 +3,8 @@ import { PostList } from "@/features/posts/post-list";
 import { useAuthStore } from "@/lib/stores/auth";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { motion } from "framer-motion";
+import { useEffect } from "react";
+import { usePosts } from "@/features/posts/hooks/use-posts";
 
 export const Route = createFileRoute("/posts/")({
 	beforeLoad: () => {
@@ -17,6 +19,12 @@ export const Route = createFileRoute("/posts/")({
 function PostsPage() {
 	const session = useAuthStore((s) => s.session);
 	const userName = session?.user?.email?.split("@")[0] ?? "there";
+
+	// Ensure posts are fresh when this page mounts (covers client-side navigation cases)
+	const { refetch } = usePosts();
+	useEffect(() => {
+		void refetch();
+	}, [refetch]);
 
 	return (
 		<div className="flex-1 flex flex-col">
@@ -36,14 +44,15 @@ function PostsPage() {
 				</motion.div>
 			</div>
 
-			{/* Create post section */}
-			<div className="container mx-auto py-5 max-w-2xl px-4 sm:px-6">
-				<CreatePost />
-			</div>
+			{/* Scrollable content: create post + posts list */}
+			<div className="flex-1 overflow-auto posts-scroll">
+				<div className="container mx-auto py-5 max-w-2xl px-4 sm:px-6">
+					<CreatePost />
+				</div>
 
-			{/* Posts list */}
-			<div className="container mx-auto max-w-2xl px-4 sm:px-6 pb-8 flex-1">
-				<PostList />
+				<div className="container mx-auto max-w-2xl px-4 sm:px-6 pb-8">
+					<PostList />
+				</div>
 			</div>
 		</div>
 	);

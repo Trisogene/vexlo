@@ -1,20 +1,14 @@
 import { usePosts } from "./hooks/use-posts";
-import { useWindowVirtualizer } from "@tanstack/react-virtual";
-import { useRef } from "react";
+
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { MessageSquare, Loader2 } from "lucide-react";
 
 export function PostList() {
 	const { data: posts, isLoading, error } = usePosts();
-	const listRef = useRef<HTMLDivElement>(null);
 
-	const rowVirtualizer = useWindowVirtualizer({
-		count: posts?.length ?? 0,
-		estimateSize: () => 140,
-		overscan: 5,
-		scrollMargin: listRef.current?.offsetTop ?? 0,
-	});
+	// No virtualization: render posts directly
+	// Simpler list rendering — variable heights handled by normal flow
 
 	if (isLoading) {
 		return (
@@ -52,41 +46,23 @@ export function PostList() {
 	}
 
 	return (
-		<div
-			ref={listRef}
-			className="w-full relative"
-			style={{
-				height: `${rowVirtualizer.getTotalSize()}px`,
-			}}
-		>
-			{rowVirtualizer.getVirtualItems().map((virtualItem) => {
-				const post = posts[virtualItem.index];
-				const userEmail = post.users?.email || "Anonymous";
-				const userName = userEmail.split("@")[0];
-				const userInitial = userName.charAt(0).toUpperCase();
+		<div className="w-full">
+			<div className="space-y-3">
+				{posts.map((post) => {
+					const userEmail = post.users?.email || "Anonymous";
+					const userName = userEmail.split("@")[0];
+					const userInitial = userName.charAt(0).toUpperCase();
 
-				return (
-					<div
-						key={post.id}
-						ref={rowVirtualizer.measureElement}
-						data-index={virtualItem.index}
-						style={{
-							position: "absolute",
-							top: 0,
-							left: 0,
-							width: "100%",
-							transform: `translateY(${virtualItem.start - rowVirtualizer.options.scrollMargin}px)`,
-						}}
-						className="py-1.5"
-					>
+					return (
 						<motion.div
+							key={post.id}
 							initial={{ opacity: 0 }}
 							animate={{ opacity: 1 }}
-							transition={{ delay: 0.02 * (virtualItem.index % 10) }}
+							transition={{ delay: 0.02 * (posts.indexOf(post) % 10) }}
 						>
 							<Card className="border-border">
 								<CardHeader className="flex flex-row items-center gap-3 pb-2 pt-3 px-4">
-									<div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-medium flex-shrink-0">
+									<div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-medium shrink-0">
 										{userInitial}
 									</div>
 									<div className="flex flex-col min-w-0">
@@ -105,9 +81,9 @@ export function PostList() {
 								</CardContent>
 							</Card>
 						</motion.div>
-					</div>
-				);
-			})}
+					);
+				})}
+			</div>
 		</div>
 	);
 }

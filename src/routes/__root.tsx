@@ -48,7 +48,7 @@ function Header() {
 	const kofiUrl = "https://ko-fi.com/danieldallimore";
 
 	return (
-		<header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur-sm">
+		<header className="site-header sticky top-0 z-9999 w-full border-b border-border bg-background/95 backdrop-blur-sm isolate">
 			<div className="container mx-auto flex h-14 items-center justify-between px-4 sm:px-6">
 				{/* Left side - Logo */}
 				<button
